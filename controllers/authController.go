@@ -40,3 +40,36 @@ func Register(c *fiber.Ctx) error {
 
 	return c.JSON(user)
 }
+
+
+
+
+func Login(c *fiber.Ctx) error {
+	var data map[string]string
+
+	if err :=c.BodyParser(&data); err!=nil{
+		return err
+	}
+	var user models.User
+
+
+	//メールアドレスクエリで検索中
+	database.DB.Where("email = ?",data["email"]).First(&user)
+
+	if user.Id ==0{
+		c.Status(400)
+		return c.JSON(fiber.Map{
+			"message":"not found",
+		})
+	}
+
+	//パスワード検証
+	if err :=bcrypt.CompareHashAndPassword(user.Password,[]byte(data["password"]));err !=nil{
+		c.Status(400)
+		return c.JSON(fiber.Map{
+			"message":"incorrect password",
+		})
+	}
+
+	return c.JSON(user)
+}
