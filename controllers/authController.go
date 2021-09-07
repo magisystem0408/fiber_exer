@@ -3,6 +3,7 @@ package controllers
 import (
 	"fiber_first/database"
 	"fiber_first/models"
+	"fiber_first/util"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
@@ -68,15 +69,10 @@ func Login(c *fiber.Ctx) error {
 		})
 	}
 
-	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
-		//strcov：uuidからintに変換してくれる
-		Issuer: strconv.Itoa(int(user.Id)),
-		//jwtの有効期限
-		ExpiresAt: time.Now().Add(time.Hour * 24).Unix(), // 1day
-	})
+	//GenerateJWTでjwtトークンにエンコードした時に、シークレットキーが発行される
+	token, err := util.GenerateJwt(strconv.Itoa(int(user.Id)))
 
-	//↑でjwtトークンにエンコードした時に、シークレットキーが発行される
-	token, err := claims.SignedString([]byte("secret"))
+
 	if err != nil {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
@@ -104,25 +100,14 @@ func User(c *fiber.Ctx) error {
 	cookie := c.Cookies("jwt")
 
 	//tokenの内容をパースしている
-	token, err := jwt.ParseWithClaims(cookie, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte("secret"), nil
-	})
+	id, _ := util.ParseJwt(cookie)
 
-	//認証エラーハンドリング
-	if err != nil || !token.Valid {
-		c.Status(fiber.StatusUnauthorized)
-		return c.JSON(fiber.Map{
-			"message": "unauthenticated",
-		})
-	}
-
-	claims := token.Claims.(*Claims)
 
 
 	//claimsのissuerのところにidが格納されている
 	//データベースのIDを参照しに行く
 	var user models.User
-	database.DB.Where("id = ?", claims.Issuer).First(&user)
+	database.DB.Where("id = ?", id).First(&user)
 
 	return c.JSON(user)
 }
