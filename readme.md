@@ -23,3 +23,5 @@
 
 - パスワードをハッシュ化させる
   - https://pkg.go.dev/golang.org/x/crypto/bcrypt
+- JWTトークンを作る
+  - https://github.com/dgrijalva/jwt-go
