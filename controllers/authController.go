@@ -4,9 +4,7 @@ import (
 	"fiber_first/database"
 	"fiber_first/models"
 	"fiber_first/util"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
-	"golang.org/x/crypto/bcrypt"
 	"strconv"
 	"time"
 )
@@ -28,14 +26,15 @@ func Register(c *fiber.Ctx) error {
 	}
 
 	//バイト変換してあげる必要がある
-	password, _ := bcrypt.GenerateFromPassword([]byte(data["password"]), 14)
+	//password, _ := bcrypt.GenerateFromPassword([]byte(data["password"]), 14)
 
 	user := models.User{
 		First:    data["first_name"],
 		Last:     data["last_name"],
 		Email:    data["email"],
-		Password: password,
 	}
+
+	user.SetPassword(data["password"])
 
 	//データベースへのコミット
 	database.DB.Create(&user)
@@ -62,7 +61,7 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	//パスワード検証
-	if err := bcrypt.CompareHashAndPassword(user.Password, []byte(data["password"])); err != nil {
+	if err := user.ComparePassword(data["password"]); err != nil {
 		c.Status(400)
 		return c.JSON(fiber.Map{
 			"message": "incorrect password",
@@ -92,18 +91,12 @@ func Login(c *fiber.Ctx) error {
 	})
 }
 
-type Claims struct {
-	jwt.StandardClaims
-}
 
 func User(c *fiber.Ctx) error {
 	cookie := c.Cookies("jwt")
 
 	//tokenの内容をパースしている
 	id, _ := util.ParseJwt(cookie)
-
-
-
 	//claimsのissuerのところにidが格納されている
 	//データベースのIDを参照しに行く
 	var user models.User
@@ -111,6 +104,7 @@ func User(c *fiber.Ctx) error {
 
 	return c.JSON(user)
 }
+
 
 func Logout(c *fiber.Ctx) error {
 

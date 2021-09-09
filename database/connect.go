@@ -19,7 +19,7 @@ func Connect() {
 		fmt.Println("接続完了")
 	}
 
-	//データベースの指定
+	//データベースの指定m
 	DB =database
 
 	database.AutoMigrate(&models.User{})
