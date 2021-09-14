@@ -29,9 +29,10 @@ func Register(c *fiber.Ctx) error {
 	//password, _ := bcrypt.GenerateFromPassword([]byte(data["password"]), 14)
 
 	user := models.User{
-		First:    data["first_name"],
-		Last:     data["last_name"],
-		Email:    data["email"],
+		First:  data["first_name"],
+		Last:   data["last_name"],
+		Email:  data["email"],
+		RoleId: 1,
 	}
 
 	user.SetPassword(data["password"])
@@ -71,7 +72,6 @@ func Login(c *fiber.Ctx) error {
 	//GenerateJWTでjwtトークンにエンコードした時に、シークレットキーが発行される
 	token, err := util.GenerateJwt(strconv.Itoa(int(user.Id)))
 
-
 	if err != nil {
 		return c.SendStatus(fiber.StatusInternalServerError)
 	}
@@ -91,7 +91,6 @@ func Login(c *fiber.Ctx) error {
 	})
 }
 
-
 func User(c *fiber.Ctx) error {
 	cookie := c.Cookies("jwt")
 
@@ -104,7 +103,6 @@ func User(c *fiber.Ctx) error {
 
 	return c.JSON(user)
 }
-
 
 func Logout(c *fiber.Ctx) error {
 
